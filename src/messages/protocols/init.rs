@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::messages::target::Node;
 use crate::state::State;
+use crate::syncer::SyncMsg;
+
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Init {
     pub msg_id: i64,
@@ -22,7 +24,12 @@ impl Init {
             .into_iter()
             .filter(|p| p.0 != self.node_id.0)
             .collect();
-        dbg!(&state.adj_nodes);
+        state
+            .sender
+            .send(SyncMsg::Topology {
+                adj_nodes: state.adj_nodes.clone(),
+            })
+            .unwrap();
         InitOk {
             in_reply_to: self.msg_id,
         }

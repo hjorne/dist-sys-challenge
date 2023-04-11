@@ -16,14 +16,12 @@ pub struct BroadcastOk {
 
 impl Broadcast {
     pub fn reply(self, state: &mut State) -> BroadcastOk {
-        eprintln!("Broadcast {}", self.message);
         state.seen_messages.insert(self.message);
         for node in &state.adj_nodes {
             state
                 .sender
                 .send(SyncMsg::ToSync {
                     src: state.id,
-                    dst: *node,
                     value: self.message,
                 })
                 .unwrap();

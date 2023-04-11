@@ -8,22 +8,29 @@ use crate::messages::target::Node;
 use crate::messages::target::Target;
 
 pub struct Syncer {
-    count: i64,
-    waiting: HashMap<Uuid, (Target, Target, HashSet<i64>)>,
+    waiting: HashMap<Uuid, Waiting>,
+    knowledge: HashMap<Node, HashSet<i64>>,
     receiver: Receiver<SyncMsg>,
 }
 
-#[derive(Copy, Clone)]
+struct Waiting {
+    src: Node,
+    dst: Node,
+    values: HashSet<i64>,
+}
+
+#[derive(Clone)]
 pub enum SyncMsg {
+    Topology { adj_nodes: Vec<Node> },
     Syncd { msg_id: Uuid },
-    ToSync { src: Node, dst: Node, value: i64 },
+    ToSync { src: Node, value: i64 },
 }
 
 impl Syncer {
     pub fn new(receiver: Receiver<SyncMsg>) -> Syncer {
         Syncer {
             receiver,
-            count: 0,
+            knowledge: Default::default(),
             waiting: Default::default(),
         }
     }
@@ -31,11 +38,9 @@ impl Syncer {
     pub fn run(&mut self) {
         let mut to_sync = HashMap::new();
         while let Ok(sync_msg) = self.receiver.try_recv() {
-            self.count += 1;
-            match sync_msg {
+            match &sync_msg {
                 SyncMsg::Syncd { msg_id } => {
-                    eprintln!("Received confirmation on {msg_id}");
-                    self.waiting.remove(&msg_id);
+                    self.waiting.remove(msg_id);
                 }
                 SyncMsg::ToSync { src, dst, value } => {
                     to_sync
@@ -65,7 +70,6 @@ impl Syncer {
                 messages: values.clone(),
             }),
         };
-        eprintln!("Sync to {:?}:{} on {:?}", dest, uuid, &values);
         println!("{}", &serde_json::to_string(&req).unwrap());
         self.waiting.insert(uuid, (src, dest, values));
     }
@@ -80,7 +84,6 @@ impl Syncer {
                     messages: values.clone(),
                 }),
             };
-            eprintln!("Resync to {:?}:{} on {:?}", dest, id, &values);
             println!("{}", &serde_json::to_string(&req).unwrap());
         }
     }

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::messages::target::Node;
 use crate::state::State;
+use crate::syncer::SyncMsg;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Topology {
@@ -25,7 +26,12 @@ impl Topology {
             .into_iter()
             .filter(|p| p.0 != state.id.0)
             .collect();
-        dbg!(&state.adj_nodes);
+        state
+            .sender
+            .send(SyncMsg::Topology {
+                adj_nodes: state.adj_nodes.clone(),
+            })
+            .unwrap();
         TopologyOk {
             in_reply_to: self.msg_id,
         }

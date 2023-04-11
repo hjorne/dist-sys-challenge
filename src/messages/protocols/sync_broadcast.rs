@@ -18,7 +18,6 @@ pub struct SyncBroadcastOk {
 
 impl SyncBroadcast {
     pub fn reply(self, state: &mut State) -> SyncBroadcastOk {
-        eprintln!("Received {} for {:?}", self.msg_id, self.messages);
         for dst in &state.adj_nodes {
             for msg in &self.messages {
                 state
