@@ -8,10 +8,14 @@ fn main() {
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        let message = serde_json::from_str::<Message>(&dbg!(input)).unwrap();
-        if let Some(response) = handler.handle(dbg!(message)) {
-            let json = serde_json::to_string(&dbg!(response)).unwrap();
-            println!("{}", dbg!(&json));
+        let message = serde_json::from_str::<Message>(&input).unwrap();
+        match message {
+            Message::Request(request) => {
+                let response = handler.handle_request(request);
+                let json = serde_json::to_string(&response).unwrap();
+                println!("{}", &json);
+            }
+            Message::Response(response) => handler.handle_response(response),
         }
     }
 }

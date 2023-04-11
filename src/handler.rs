@@ -1,5 +1,5 @@
-use crate::messages::message::Message;
-use crate::messages::response::Response;
+use crate::messages::request::Request;
+use crate::messages::response::{Response, ResponseBody};
 use crate::state::State;
 
 #[derive(Default)]
@@ -8,10 +8,12 @@ pub struct Handler {
 }
 
 impl Handler {
-    pub fn handle(&mut self, msg: Message) -> Option<Response> {
-        match msg {
-            Message::Request(req) => Some(req.reply(&mut self.state)),
-            Message::Response(_response) => None,
+    pub fn handle_request(&mut self, request: Request) -> Response {
+        request.reply(&mut self.state)
+    }
+    pub fn handle_response(&mut self, response: Response) {
+        if let ResponseBody::BroadcastOk(broadcast_ok) = response.body {
+            self.state.syncer.receive(broadcast_ok.in_reply_to);
         }
     }
 }

@@ -18,7 +18,11 @@ pub struct InitOk {
 impl Init {
     pub fn reply(self, state: &mut State) -> InitOk {
         state.id = self.node_id;
-        state.adj_nodes = self.node_ids;
+        state.adj_nodes = self
+            .node_ids
+            .into_iter()
+            .filter(|p| p.0 != self.node_id.0)
+            .collect();
         InitOk {
             in_reply_to: self.msg_id,
         }

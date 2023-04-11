@@ -18,7 +18,13 @@ pub struct TopologyOk {
 
 impl Topology {
     pub fn reply(mut self, state: &mut State) -> TopologyOk {
-        state.adj_nodes = self.topology.remove(&state.id).unwrap();
+        state.adj_nodes = self
+            .topology
+            .remove(&state.id)
+            .unwrap()
+            .into_iter()
+            .filter(|p| p.0 != state.id.0)
+            .collect();
         TopologyOk {
             in_reply_to: self.msg_id,
         }

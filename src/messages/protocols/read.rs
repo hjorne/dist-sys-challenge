@@ -16,7 +16,7 @@ impl Read {
     pub fn reply(self, state: &State) -> ReadOk {
         ReadOk {
             in_reply_to: self.msg_id,
-            messages: state.seen_messages.clone(),
+            messages: state.seen_messages.clone().into_iter().collect(),
         }
     }
 }
