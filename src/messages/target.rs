@@ -1,86 +1,17 @@
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Request {
-    pub src: Target,
-    pub dest: Target,
-    pub body: RequestBody,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Response {
-    pub src: Target,
-    pub dest: Target,
-    pub body: ResponseBody,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum RequestBody {
-    Init {
-        msg_id: i64,
-        node_id: Node,
-        node_ids: Vec<Node>,
-    },
-    Echo {
-        msg_id: i64,
-        echo: String,
-    },
-    Generate {
-        msg_id: i64,
-    },
-    Broadcast {
-        msg_id: i64,
-        message: i64,
-    },
-    Read {
-        msg_id: i64,
-    },
-    Topology {
-        msg_id: i64,
-        topology: HashMap<Node, Vec<Node>>,
-    },
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum ResponseBody {
-    InitOk {
-        in_reply_to: i64,
-    },
-    EchoOk {
-        in_reply_to: i64,
-        echo: String,
-    },
-    GenerateOk {
-        in_reply_to: i64,
-        id: String,
-    },
-    BroadcastOk {
-        in_reply_to: i64,
-    },
-    ReadOk {
-        in_reply_to: i64,
-        messages: Vec<i64>,
-    },
-    TopologyOk {
-        in_reply_to: i64,
-    },
-}
-
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum Target {
     Client(Client),
     Node(Node),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub struct Client(pub i64);
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Node(pub i64);
 
 impl<'de> Deserialize<'de> for Client {
@@ -126,5 +57,52 @@ impl Serialize for Node {
         S: Serializer,
     {
         serializer.serialize_str(&format!("n{}", self.0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::messages::target::{Client, Node, Target};
+
+    #[test]
+    fn client_serdes() {
+        let json = "\"c20\"";
+        assert_eq!(serde_json::to_string(&Client(20)).unwrap(), json);
+        assert_eq!(serde_json::from_str::<Client>(json).unwrap(), Client(20));
+    }
+
+    #[test]
+    fn node_serdes() {
+        let json = "\"n20\"";
+        assert_eq!(serde_json::to_string(&Node(20)).unwrap(), json);
+        assert_eq!(serde_json::from_str::<Node>(json).unwrap(), Node(20));
+    }
+
+    #[test]
+    fn target_node_serdes() {
+        let json = "\"n20\"";
+
+        assert_eq!(
+            serde_json::to_string(&Target::Node(Node(20))).unwrap(),
+            json
+        );
+        assert_eq!(
+            serde_json::from_str::<Target>(json).unwrap(),
+            Target::Node(Node(20))
+        );
+    }
+
+    #[test]
+    fn target_client_serdes() {
+        let json = "\"c20\"";
+
+        assert_eq!(
+            serde_json::to_string(&Target::Client(Client(20))).unwrap(),
+            json
+        );
+        assert_eq!(
+            serde_json::from_str::<Target>(json).unwrap(),
+            Target::Client(Client(20))
+        );
     }
 }
