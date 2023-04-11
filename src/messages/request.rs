@@ -5,6 +5,7 @@ use crate::messages::protocols::echo::Echo;
 use crate::messages::protocols::generate::Generate;
 use crate::messages::protocols::init::Init;
 use crate::messages::protocols::read::Read;
+use crate::messages::protocols::sync_broadcast::SyncBroadcast;
 use crate::messages::protocols::topology::Topology;
 use crate::messages::response::{Response, ResponseBody};
 use crate::messages::target::Target;
@@ -36,6 +37,7 @@ pub enum RequestBody {
     Broadcast(Broadcast),
     Read(Read),
     Topology(Topology),
+    SyncBroadcast(SyncBroadcast),
 }
 
 impl RequestBody {
@@ -47,6 +49,9 @@ impl RequestBody {
             RequestBody::Broadcast(broadcast) => ResponseBody::BroadcastOk(broadcast.reply(state)),
             RequestBody::Read(read) => ResponseBody::ReadOk(read.reply(state)),
             RequestBody::Topology(topology) => ResponseBody::TopologyOk(topology.reply(state)),
+            RequestBody::SyncBroadcast(sync_broadcast) => {
+                ResponseBody::SyncBroadcastOk(sync_broadcast.reply(state))
+            }
         }
     }
 }

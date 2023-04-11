@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::state::State;
+use crate::syncer::SyncMsg;
 
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Broadcast {
@@ -15,12 +16,18 @@ pub struct BroadcastOk {
 
 impl Broadcast {
     pub fn reply(self, state: &mut State) -> BroadcastOk {
+        eprintln!("Broadcast {}", self.message);
         state.seen_messages.insert(self.message);
-
-        for dest in &state.adj_nodes {
-            state.syncer.send(state.id, *dest, self.message);
+        for node in &state.adj_nodes {
+            state
+                .sender
+                .send(SyncMsg::ToSync {
+                    src: state.id,
+                    dst: *node,
+                    value: self.message,
+                })
+                .unwrap();
         }
-
         BroadcastOk {
             in_reply_to: self.msg_id,
         }

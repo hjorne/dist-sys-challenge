@@ -1,66 +1,87 @@
-use crate::messages::protocols::broadcast::Broadcast;
+use std::collections::{HashMap, HashSet};
+use std::sync::mpsc::Receiver;
+use uuid::Uuid;
+
+use crate::messages::protocols::sync_broadcast::SyncBroadcast;
 use crate::messages::request::{Request, RequestBody};
 use crate::messages::target::Node;
 use crate::messages::target::Target;
-use clokwerk::{Scheduler, TimeUnits};
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
 
-#[derive(Default)]
 pub struct Syncer {
-    id: i64,
-    to_sync: HashMap<i64, (Target, Target, i64)>,
+    count: i64,
+    waiting: HashMap<Uuid, (Target, Target, HashSet<i64>)>,
+    receiver: Receiver<SyncMsg>,
+}
+
+#[derive(Copy, Clone)]
+pub enum SyncMsg {
+    Syncd { msg_id: Uuid },
+    ToSync { src: Node, dst: Node, value: i64 },
 }
 
 impl Syncer {
-    pub fn new() -> &'static Mutex<Syncer> {
-        let scheduler = Scheduler::new();
-        let mut syncher = Mutex::new(Syncer {
-            ..Default::default()
-        });
-        scheduler
-            .every(10.minutes())
-            .run(|| syncher.lock().unwrap().resync());
-        &syncher
+    pub fn new(receiver: Receiver<SyncMsg>) -> Syncer {
+        Syncer {
+            receiver,
+            count: 0,
+            waiting: Default::default(),
+        }
     }
 
-    pub fn send(&mut self, src: Node, dest: Node, i: i64) {
+    pub fn run(&mut self) {
+        let mut to_sync = HashMap::new();
+        while let Ok(sync_msg) = self.receiver.try_recv() {
+            self.count += 1;
+            match sync_msg {
+                SyncMsg::Syncd { msg_id } => {
+                    eprintln!("Received confirmation on {msg_id}");
+                    self.waiting.remove(&msg_id);
+                }
+                SyncMsg::ToSync { src, dst, value } => {
+                    to_sync
+                        .entry((src, dst))
+                        .or_insert(HashSet::new())
+                        .insert(value);
+                }
+            }
+        }
+
+        self.resync();
+
+        for ((src, dst), values) in to_sync {
+            self.send(src, dst, values);
+        }
+    }
+
+    fn send(&mut self, src: Node, dest: Node, values: HashSet<i64>) {
         let src = Target::Node(src);
         let dest = Target::Node(dest);
+        let uuid = Uuid::new_v4();
         let req = Request {
             src,
             dest,
-            body: RequestBody::Broadcast(Broadcast {
-                msg_id: self.id,
-                message: i,
+            body: RequestBody::SyncBroadcast(SyncBroadcast {
+                msg_id: uuid,
+                messages: values.clone(),
             }),
         };
+        eprintln!("Sync to {:?}:{} on {:?}", dest, uuid, &values);
         println!("{}", &serde_json::to_string(&req).unwrap());
-        self.to_sync.insert(self.id, (src, dest, i));
-        self.id += 1;
-
-        if self.id % 10 == 0 {
-            self.resync();
-        }
+        self.waiting.insert(uuid, (src, dest, values));
     }
 
     fn resync(&self) {
-        dbg!(&self.to_sync.len());
-        for (src, dest, i) in self.to_sync.values() {
+        for (id, (src, dest, values)) in &self.waiting {
             let req = Request {
                 src: *src,
                 dest: *dest,
-                body: RequestBody::Broadcast(Broadcast {
-                    msg_id: self.id,
-                    message: *i,
+                body: RequestBody::SyncBroadcast(SyncBroadcast {
+                    msg_id: *id,
+                    messages: values.clone(),
                 }),
             };
+            eprintln!("Resync to {:?}:{} on {:?}", dest, id, &values);
             println!("{}", &serde_json::to_string(&req).unwrap());
         }
-    }
-
-    pub fn receive(&mut self, i: i64) {
-        self.to_sync.remove(&i);
     }
 }

@@ -1,10 +1,19 @@
-use std::io;
+use std::sync::mpsc;
+use std::time::Duration;
+use std::{io, thread};
 
 use fly_challenge::handler::Handler;
 use fly_challenge::messages::message::Message;
+use fly_challenge::syncer::Syncer;
 
 fn main() {
-    let mut handler = Handler::default();
+    let (tx, rx) = mpsc::channel();
+    let mut handler = Handler::new(tx);
+    let mut syncer = Syncer::new(rx);
+    thread::spawn(move || loop {
+        syncer.run();
+        thread::sleep(Duration::from_millis(250));
+    });
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();

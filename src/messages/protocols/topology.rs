@@ -25,6 +25,7 @@ impl Topology {
             .into_iter()
             .filter(|p| p.0 != state.id.0)
             .collect();
+        dbg!(&state.adj_nodes);
         TopologyOk {
             in_reply_to: self.msg_id,
         }
