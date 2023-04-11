@@ -27,7 +27,7 @@ impl Syncer {
         self.to_sync.insert(self.id, (src, dest, i));
         self.id += 1;
 
-        if self.id % 20 == 0 {
+        if self.id % 10 == 0 {
             self.resync();
         }
     }

@@ -1,0 +1,1 @@
+This is a Rust solution to the [fly.io distributed systems challenge](https://fly.io/dist-sys). Had to implement the messaging system from scratch.
