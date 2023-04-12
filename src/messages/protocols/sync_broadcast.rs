@@ -20,8 +20,8 @@ pub struct SyncBroadcastOk {
 impl SyncBroadcast {
     pub fn reply(self, src: Target, state: &mut State) -> SyncBroadcastOk {
         let node = match src {
-            Target::Client(_) => None,
             Target::Node(node) => Some(node),
+            _ => None,
         };
         for msg in &self.messages {
             state

@@ -4,7 +4,7 @@ use crate::messages::protocols::broadcast::Broadcast;
 use crate::messages::protocols::echo::Echo;
 use crate::messages::protocols::generate::Generate;
 use crate::messages::protocols::init::Init;
-use crate::messages::protocols::read::Read;
+use crate::messages::protocols::read_old::ReadOld;
 use crate::messages::protocols::sync_broadcast::SyncBroadcast;
 use crate::messages::protocols::topology::Topology;
 use crate::messages::response::{Response, ResponseBody};
@@ -35,7 +35,7 @@ pub enum RequestBody {
     Echo(Echo),
     Generate(Generate),
     Broadcast(Broadcast),
-    Read(Read),
+    ReadOld(ReadOld),
     Topology(Topology),
     SyncBroadcast(SyncBroadcast),
 }
@@ -46,8 +46,10 @@ impl RequestBody {
             RequestBody::Init(init) => ResponseBody::InitOk(init.reply(state)),
             RequestBody::Echo(echo) => ResponseBody::EchoOk(echo.reply()),
             RequestBody::Generate(generate) => ResponseBody::GenerateOk(generate.reply()),
-            RequestBody::Broadcast(broadcast) => ResponseBody::BroadcastOk(broadcast.reply(src, state)),
-            RequestBody::Read(read) => ResponseBody::ReadOk(read.reply(state)),
+            RequestBody::Broadcast(broadcast) => {
+                ResponseBody::BroadcastOk(broadcast.reply(src, state))
+            }
+            RequestBody::ReadOld(read_old) => ResponseBody::ReadOkOld(read_old.reply(state)),
             RequestBody::Topology(topology) => ResponseBody::TopologyOk(topology.reply(state)),
             RequestBody::SyncBroadcast(sync_broadcast) => {
                 ResponseBody::SyncBroadcastOk(sync_broadcast.reply(src, state))

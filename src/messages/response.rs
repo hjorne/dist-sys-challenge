@@ -4,8 +4,8 @@ use crate::messages::protocols::broadcast::BroadcastOk;
 use crate::messages::protocols::echo::EchoOk;
 use crate::messages::protocols::generate::GenerateOk;
 use crate::messages::protocols::init::InitOk;
+use crate::messages::protocols::read_old::ReadOkOld;
 use crate::messages::protocols::sync_broadcast::SyncBroadcastOk;
-use crate::messages::protocols::read::ReadOk;
 use crate::messages::protocols::topology::TopologyOk;
 use crate::messages::target::Target;
 
@@ -23,7 +23,7 @@ pub enum ResponseBody {
     EchoOk(EchoOk),
     GenerateOk(GenerateOk),
     BroadcastOk(BroadcastOk),
-    ReadOk(ReadOk),
+    ReadOkOld(ReadOkOld),
     TopologyOk(TopologyOk),
     SyncBroadcastOk(SyncBroadcastOk),
 }

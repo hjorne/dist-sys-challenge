@@ -21,8 +21,8 @@ impl Broadcast {
             .sender
             .send(SyncMsg::ToSync {
                 src: match src {
-                    Target::Client(_) => None,
                     Target::Node(node) => Some(node),
+                    _ => None,
                 },
                 value: self.message,
             })

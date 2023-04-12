@@ -6,6 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub enum Target {
     Client(Client),
     Node(Node),
+    SeqKv(SeqKv),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
@@ -13,6 +14,10 @@ pub struct Client(pub i64);
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default)]
 pub struct Node(pub i64);
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename = "seq-kv")]
+pub struct SeqKv;
 
 impl<'de> Deserialize<'de> for Client {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
