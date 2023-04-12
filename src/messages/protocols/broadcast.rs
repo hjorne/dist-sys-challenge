@@ -1,3 +1,4 @@
+use crate::messages::target::Target;
 use serde::{Deserialize, Serialize};
 
 use crate::state::State;
@@ -15,17 +16,18 @@ pub struct BroadcastOk {
 }
 
 impl Broadcast {
-    pub fn reply(self, state: &mut State) -> BroadcastOk {
+    pub fn reply(self, src: Target, state: &mut State) -> BroadcastOk {
+        state
+            .sender
+            .send(SyncMsg::ToSync {
+                src: match src {
+                    Target::Client(_) => None,
+                    Target::Node(node) => Some(node),
+                },
+                value: self.message,
+            })
+            .unwrap();
         state.seen_messages.insert(self.message);
-        for node in &state.adj_nodes {
-            state
-                .sender
-                .send(SyncMsg::ToSync {
-                    src: state.id,
-                    value: self.message,
-                })
-                .unwrap();
-        }
         BroadcastOk {
             in_reply_to: self.msg_id,
         }

@@ -1,3 +1,4 @@
+use crate::messages::target::Target;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -17,18 +18,19 @@ pub struct SyncBroadcastOk {
 }
 
 impl SyncBroadcast {
-    pub fn reply(self, state: &mut State) -> SyncBroadcastOk {
-        for dst in &state.adj_nodes {
-            for msg in &self.messages {
-                state
-                    .sender
-                    .send(SyncMsg::ToSync {
-                        src: state.id,
-                        dst: *dst,
-                        value: *msg,
-                    })
-                    .unwrap();
-            }
+    pub fn reply(self, src: Target, state: &mut State) -> SyncBroadcastOk {
+        let node = match src {
+            Target::Client(_) => None,
+            Target::Node(node) => Some(node),
+        };
+        for msg in &self.messages {
+            state
+                .sender
+                .send(SyncMsg::ToSync {
+                    src: node,
+                    value: *msg,
+                })
+                .unwrap();
         }
         state.seen_messages.extend(self.messages);
         SyncBroadcastOk {

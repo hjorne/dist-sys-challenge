@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="3b" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="./maelstrom test -w broadcast --bin ../target/release/fly-challenge --node-count 5 --time-limit 20 --rate 10" />
+    <option name="SCRIPT_TEXT" value="./maelstrom test -w broadcast --bin ../target/release/fly-challenge --node-count 15 --time-limit 30 --rate 10" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />

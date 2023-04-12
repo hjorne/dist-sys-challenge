@@ -29,6 +29,7 @@ impl Topology {
         state
             .sender
             .send(SyncMsg::Topology {
+                id: state.id,
                 adj_nodes: state.adj_nodes.clone(),
             })
             .unwrap();

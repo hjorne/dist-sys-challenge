@@ -23,7 +23,7 @@ impl Request {
         Response {
             src: self.dest,
             dest: self.src,
-            body: self.body.reply(state),
+            body: self.body.reply(self.src, state),
         }
     }
 }
@@ -41,16 +41,16 @@ pub enum RequestBody {
 }
 
 impl RequestBody {
-    fn reply(self, state: &mut State) -> ResponseBody {
+    fn reply(self, src: Target, state: &mut State) -> ResponseBody {
         match self {
             RequestBody::Init(init) => ResponseBody::InitOk(init.reply(state)),
             RequestBody::Echo(echo) => ResponseBody::EchoOk(echo.reply()),
             RequestBody::Generate(generate) => ResponseBody::GenerateOk(generate.reply()),
-            RequestBody::Broadcast(broadcast) => ResponseBody::BroadcastOk(broadcast.reply(state)),
+            RequestBody::Broadcast(broadcast) => ResponseBody::BroadcastOk(broadcast.reply(src, state)),
             RequestBody::Read(read) => ResponseBody::ReadOk(read.reply(state)),
             RequestBody::Topology(topology) => ResponseBody::TopologyOk(topology.reply(state)),
             RequestBody::SyncBroadcast(sync_broadcast) => {
-                ResponseBody::SyncBroadcastOk(sync_broadcast.reply(state))
+                ResponseBody::SyncBroadcastOk(sync_broadcast.reply(src, state))
             }
         }
     }
